@@ -25,8 +25,8 @@ from PyPDF2 import PdfMerger, PdfReader
 import tempfile
 
 app = Flask(__name__, 
-            template_folder='templates_enhanced',
-            static_folder='static_enhanced')
+            template_folder='templates',
+            static_folder='static')
 app.secret_key = 'your-secret-key-change-this-in-production'
 
 # ---------------------------------------------------------
@@ -1890,3 +1890,4 @@ def api_generate_pdf():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+
