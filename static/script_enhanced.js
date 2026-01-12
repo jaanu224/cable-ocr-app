@@ -1,7 +1,7 @@
 // =============== BASIC DOM HANDLES ===============
 const pdfInput = document.getElementById("pdfFile");
 const btnExtract = document.getElementById("btnExtract");
-const extractStatus = document.getElementById("extractStatus");
+// extractStatus element removed from HTML
 
 
 const conductorForm = document.getElementById("conductorForm");
@@ -345,8 +345,8 @@ btnExtract.addEventListener("click", async () => {
     return;
   }
 
-  extractStatus.innerHTML = 'Extracting...';
-  extractStatus.className = 'status-badge status-warning';
+  // Show extracting notification
+  showNotification("Extracting data from PDF...", 'info');
   resultBox.style.display = "none";
 
   const fd = new FormData();
@@ -464,13 +464,9 @@ btnExtract.addEventListener("click", async () => {
 
     // Debug text removed - keeping extraction logic only
 
-    extractStatus.innerHTML = 'Extraction Complete';
-    extractStatus.className = 'status-badge status-success';
     showNotification("Data extracted successfully!", 'success');
   } catch (err) {
     console.error(err);
-    extractStatus.innerHTML = 'Extraction Failed';
-    extractStatus.className = 'status-badge status-error';
     showNotification("Could not extract data from PDF: " + err.message, 'error');
   }
 });
