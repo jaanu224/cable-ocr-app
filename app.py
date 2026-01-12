@@ -2,32 +2,56 @@ import os
 import re
 import io
 import traceback
+import sys
 
-from flask import (
-    Flask,
-    render_template,
-    request,
-    jsonify,
-    send_file,
-    session
-)
-from pdf2image import convert_from_bytes
-import pytesseract
+# Check for required packages and provide helpful error messages
+try:
+    from flask import (
+        Flask,
+        render_template,
+        request,
+        jsonify,
+        send_file,
+        session
+    )
+except ImportError as e:
+    print(f"❌ Flask not installed: {e}")
+    sys.exit(1)
+
+try:
+    from pdf2image import convert_from_bytes
+except ImportError as e:
+    print(f"❌ pdf2image not installed: {e}")
+    print("💡 This is needed for PDF processing")
+    convert_from_bytes = None
+
+try:
+    import pytesseract
+except ImportError as e:
+    print(f"❌ pytesseract not installed: {e}")
+    print("💡 This is needed for OCR functionality")
+    pytesseract = None
 
 # For PDF generation
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib.utils import ImageReader
-from PyPDF2 import PdfMerger, PdfReader
-import tempfile
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.units import mm
+    from reportlab.lib import colors
+    from reportlab.platypus import Table, TableStyle
+    from reportlab.lib.utils import ImageReader
+    from PyPDF2 import PdfMerger, PdfReader
+    import tempfile
+except ImportError as e:
+    print(f"⚠️ PDF generation libraries not fully available: {e}")
+    print("💡 PDF generation features may be limited")
 
 app = Flask(__name__, 
             template_folder='templates',
             static_folder='static')
 app.secret_key = 'your-secret-key-change-this-in-production'
+
+print("🚀 Flask app initialized successfully")
 
 # ---------------------------------------------------------
 #  CONFIG – change these paths if your installation differs
@@ -39,8 +63,37 @@ TESSERACT_EXE = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 # Poppler bin path (where pdfinfo / pdftoppm / pdfimages live)
 POPPLER_PATH = r"C:\poppler-25.12.0\Library\bin"
 
-if os.path.exists(TESSERACT_EXE):
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_EXE
+print("🔍 Checking for system dependencies...")
+
+# For production deployment, try to use system-installed versions
+try:
+    # Try to import and test pytesseract
+    if pytesseract:
+        if not os.path.exists(TESSERACT_EXE):
+            # Try system tesseract (for Linux/cloud deployment)
+            try:
+                import subprocess
+                result = subprocess.run(['tesseract', '--version'], check=True, capture_output=True, text=True)
+                TESSERACT_EXE = 'tesseract'  # Use system version
+                print("✅ Using system tesseract")
+                print(f"📋 Tesseract version: {result.stdout.split()[1] if result.stdout else 'unknown'}")
+            except Exception as e:
+                print(f"⚠️ Tesseract not found: {e}")
+                TESSERACT_EXE = None
+
+        if not os.path.exists(POPPLER_PATH):
+            POPPLER_PATH = None  # Use system poppler
+            print("✅ Using system poppler")
+
+        if TESSERACT_EXE and (os.path.exists(TESSERACT_EXE) or TESSERACT_EXE == 'tesseract'):
+            pytesseract.pytesseract.tesseract_cmd = TESSERACT_EXE
+            print("✅ Tesseract configured successfully")
+    else:
+        print("⚠️ pytesseract not available, OCR functionality disabled")
+        TESSERACT_EXE = None
+except Exception as e:
+    print(f"⚠️ Error configuring tesseract: {e}")
+    TESSERACT_EXE = None
 
 
 # ==================== OCR HELPERS ====================
@@ -48,29 +101,28 @@ if os.path.exists(TESSERACT_EXE):
 def ocr_pdf_to_text(pdf_bytes: bytes) -> str:
     """
     Convert a PDF (bytes) to text via pdf2image + Tesseract OCR.
-    Uses enhanced settings for better table recognition.
+    Optimized for speed with single OCR pass.
     """
-    pages = convert_from_bytes(pdf_bytes, dpi=300, poppler_path=POPPLER_PATH)
-    text_chunks = []
+    if not convert_from_bytes:
+        raise Exception("pdf2image not available - cannot process PDF")
     
-    for page_num, page in enumerate(pages, 1):
-        # Try multiple OCR configurations for better table reading
-        
-        # Config 1: Standard OCR
-        text1 = pytesseract.image_to_string(page, lang="eng")
-        text_chunks.append(f"=== PAGE {page_num} STANDARD ===\n{text1}")
-        
-        # Config 2: Table-optimized OCR
-        table_config = r'--oem 3 --psm 6'
-        text2 = pytesseract.image_to_string(page, lang="eng", config=table_config)
-        text_chunks.append(f"=== PAGE {page_num} TABLE ===\n{text2}")
-        
-        # Config 3: Data extraction optimized
-        data_config = r'--oem 3 --psm 4'
-        text3 = pytesseract.image_to_string(page, lang="eng", config=data_config)
-        text_chunks.append(f"=== PAGE {page_num} DATA ===\n{text3}")
+    if not pytesseract or not TESSERACT_EXE:
+        raise Exception("Tesseract OCR not available - cannot extract text")
     
-    return "\n".join(text_chunks)
+    try:
+        pages = convert_from_bytes(pdf_bytes, dpi=200, poppler_path=POPPLER_PATH)  # Reduced DPI for speed
+        text_chunks = []
+        
+        for page_num, page in enumerate(pages, 1):
+            # Single optimized OCR configuration for speed
+            config = r'--oem 3 --psm 6'  # Fast table-optimized mode
+            text = pytesseract.image_to_string(page, lang="eng", config=config)
+            text_chunks.append(f"=== PAGE {page_num} ===\n{text}")
+        
+        return "\n".join(text_chunks)
+    except Exception as e:
+        print(f"❌ OCR Error: {e}")
+        raise Exception(f"OCR processing failed: {str(e)}")
 
 
 # ==================== TEXT PARSING HELPERS ====================
@@ -1651,7 +1703,19 @@ def build_pdf_report(title: str, conductor_text: str, sheath_text: str) -> io.By
 
 @app.route("/")
 def index():
-    return render_template("index_enhanced.html")
+    return render_template("index.html")
+
+@app.route("/health")
+def health_check():
+    """Health check endpoint for Railway"""
+    status = {
+        "status": "healthy",
+        "flask": "✅ Running",
+        "tesseract": "✅ Available" if TESSERACT_EXE else "❌ Not available",
+        "pdf2image": "✅ Available" if convert_from_bytes else "❌ Not available",
+        "pytesseract": "✅ Available" if pytesseract else "❌ Not available"
+    }
+    return jsonify(status)
 
 
 @app.route("/api/extract", methods=["POST"])
@@ -1889,5 +1953,5 @@ def api_generate_pdf():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
-
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=False)
