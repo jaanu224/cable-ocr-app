@@ -1,0 +1,69 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         FIX POPPLER ERROR - QUICK GUIDE                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+❌ ERROR YOU'RE SEEING:
+   "Could not extract data from PDF: Unable to get page count. 
+    Is poppler installed and in PATH?"
+
+✅ THE FIX (3 Simple Steps):
+
+   1. STOP the Flask app:
+      → Go to the terminal where Flask is running
+      → Press Ctrl+C
+      → Or close the terminal window
+
+   2. RESTART the Flask app:
+      → Open a NEW terminal
+      → Run: cd cable-ocr-app\cable-ocr-app
+      → Run: python app_enhanced.py
+      
+      OR just double-click: start_app.bat
+
+   3. REFRESH your browser:
+      → Press F5 or click refresh
+      → Try uploading the PDF again
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 WHY THIS HAPPENS:
+
+   The Flask app was started BEFORE the Poppler path was configured.
+   Python loads configuration at startup, so you need to restart the app.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ VERIFICATION (Everything is installed correctly):
+
+   ✓ Tesseract: C:\Program Files\Tesseract-OCR\tesseract.exe
+   ✓ Poppler:   C:\poppler-25.12.0\Library\bin
+   ✓ Test passed: python test_pdf_conversion.py ✓
+
+   All components are working - just restart Flask!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 EASIEST WAY TO START:
+
+   Windows: Double-click → start_app.bat
+   
+   This will:
+   • Check if Tesseract is installed ✓
+   • Check if Poppler is installed ✓
+   • Start Flask automatically ✓
+   • Show you the URL to open ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 AFTER RESTARTING:
+
+   1. Open: http://localhost:5001
+   2. Upload your cable datasheet PDF
+   3. Click "Extract From PDF"
+   4. ✓ Should work now!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Need detailed help? See: FIX_POPPLER_ERROR.md
+
+╚══════════════════════════════════════════════════════════════════════════════╝

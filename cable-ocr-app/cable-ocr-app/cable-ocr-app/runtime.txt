@@ -1,0 +1,19 @@
+python-3.11.9
+Good morning everyone.
+
+My project is called **Cable OCR**.
+
+Cable OCR is an AI-based system designed to extract cable specifications from engineering documents such as PDFs, scanned drawings, and cable label images.
+
+In this project, the user first uploads a PDF or image file through a web application. For PDF files, I used **Poppler** to convert each page into an image. Then, I applied **OpenCV** preprocessing techniques to enhance the image quality. After that, I used **Tesseract OCR** to automatically extract the text from the document.
+
+Along with automatic extraction, the system also provides a **manual entry option**. This ensures that if a document is unclear or OCR confidence is low, users can manually enter the cable details for better accuracy.
+
+The system extracts key parameters such as **voltage rating, conductor size, insulation type, and sheath material**, and generates structured results along with **downloadable PDF reports**.
+
+For the **backend**, I used **Flask**, which handles file uploads, OCR processing, data extraction, and report generation.
+For the **frontend**, I used **HTML, CSS, and JavaScript** to create a simple and user-friendly web interface.
+
+Overall, this project reduces manual effort, minimizes errors, and makes cable documentation faster, more accurate, and reliable.
+
+Thank you.
